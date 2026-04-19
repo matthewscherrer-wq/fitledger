@@ -1,0 +1,1817 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>FitLedger — Your Training Log</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/icon?family=Material+Symbols+Rounded" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  /* ---------- Material Design 3 inspired tokens ---------- */
+  :root {
+    --primary: #006a60;
+    --on-primary: #ffffff;
+    --primary-container: #9df2e3;
+    --on-primary-container: #00201c;
+    --secondary: #4a6360;
+    --secondary-container: #cce8e3;
+    --tertiary: #456179;
+    --error: #ba1a1a;
+    --surface: #fafdfb;
+    --surface-dim: #d8dbda;
+    --surface-bright: #fafdfb;
+    --surface-container-lowest: #ffffff;
+    --surface-container-low: #f2f5f3;
+    --surface-container: #eceeed;
+    --surface-container-high: #e7e9e8;
+    --surface-container-highest: #e1e3e2;
+    --on-surface: #191c1b;
+    --on-surface-variant: #3f4947;
+    --outline: #6f7977;
+    --outline-variant: #bec9c6;
+    --shadow: rgba(0,0,0,0.15);
+
+    --flame: #e4572e;
+    --gold: #d4a017;
+    --success: #2e7d32;
+
+    --chart-1: #006a60;
+    --chart-2: #7c5800;
+    --chart-3: #8b4185;
+    --chart-4: #456179;
+    --chart-5: #b5651d;
+
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 28px;
+
+    --elev-1: 0 1px 2px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.08);
+    --elev-2: 0 1px 2px rgba(0,0,0,0.08), 0 2px 6px rgba(0,0,0,0.10);
+    --elev-3: 0 4px 8px rgba(0,0,0,0.10), 0 8px 24px rgba(0,0,0,0.12);
+  }
+
+  [data-theme="dark"] {
+    --primary: #80d5c7;
+    --on-primary: #003731;
+    --primary-container: #005047;
+    --on-primary-container: #9df2e3;
+    --secondary: #b1ccc7;
+    --secondary-container: #324b48;
+    --tertiary: #abc9e5;
+    --error: #ffb4ab;
+    --surface: #0e1514;
+    --surface-dim: #0e1514;
+    --surface-bright: #343b3a;
+    --surface-container-lowest: #090f0e;
+    --surface-container-low: #171d1c;
+    --surface-container: #1b2120;
+    --surface-container-high: #252b2a;
+    --surface-container-highest: #303635;
+    --on-surface: #dee4e2;
+    --on-surface-variant: #bec9c6;
+    --outline: #899390;
+    --outline-variant: #3f4947;
+    --shadow: rgba(0,0,0,0.4);
+
+    --flame: #ff8a65;
+    --gold: #ffcf52;
+    --success: #81c784;
+
+    --chart-1: #80d5c7;
+    --chart-2: #f0c14a;
+    --chart-3: #e4b4dd;
+    --chart-4: #abc9e5;
+    --chart-5: #ffb77a;
+
+    --elev-1: 0 1px 2px rgba(0,0,0,0.25), 0 1px 3px rgba(0,0,0,0.30);
+    --elev-2: 0 1px 2px rgba(0,0,0,0.30), 0 2px 6px rgba(0,0,0,0.40);
+    --elev-3: 0 4px 8px rgba(0,0,0,0.35), 0 8px 24px rgba(0,0,0,0.50);
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--surface);
+    color: var(--on-surface);
+    font-family: 'Roboto', system-ui, -apple-system, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    transition: background-color 0.25s ease, color 0.25s ease;
+  }
+
+  .material-symbols-rounded {
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    font-size: 20px;
+    vertical-align: middle;
+  }
+
+  /* ---------- App bar ---------- */
+  .app-bar {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: var(--surface-container);
+    border-bottom: 1px solid var(--outline-variant);
+    padding: 12px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    backdrop-filter: saturate(180%) blur(8px);
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 500;
+    font-size: 20px;
+    letter-spacing: 0.15px;
+    color: var(--on-surface);
+  }
+  .brand-logo {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: var(--on-primary);
+    display: grid;
+    place-items: center;
+    box-shadow: var(--elev-1);
+  }
+  .bar-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  /* ---------- Buttons ---------- */
+  .btn {
+    border: none;
+    outline: none;
+    font: inherit;
+    font-weight: 500;
+    letter-spacing: 0.1px;
+    cursor: pointer;
+    border-radius: 20px;
+    padding: 10px 18px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: background-color 0.15s, box-shadow 0.15s, transform 0.05s;
+  }
+  .btn-filled {
+    background: var(--primary);
+    color: var(--on-primary);
+    box-shadow: var(--elev-1);
+  }
+  .btn-filled:hover { box-shadow: var(--elev-2); }
+  .btn-tonal {
+    background: var(--secondary-container);
+    color: var(--on-surface);
+  }
+  .btn-tonal:hover { background: var(--surface-container-highest); }
+  .btn-text {
+    background: transparent;
+    color: var(--primary);
+    padding: 8px 12px;
+  }
+  .btn-text:hover { background: var(--surface-container-high); }
+  .btn-icon {
+    background: transparent;
+    color: var(--on-surface-variant);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    border: none;
+    transition: background-color 0.15s, color 0.15s;
+  }
+  .btn-icon:hover { background: var(--surface-container-high); color: var(--on-surface); }
+  .btn:active { transform: scale(0.98); }
+
+  /* ---------- Layout ---------- */
+  main {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 24px;
+  }
+
+  .page-title {
+    font-size: 28px;
+    font-weight: 400;
+    margin: 8px 0 4px;
+    letter-spacing: 0;
+  }
+  .page-subtitle {
+    color: var(--on-surface-variant);
+    margin: 0 0 24px;
+  }
+
+  /* ---------- Goal + streak row ---------- */
+  .hero-grid {
+    display: grid;
+    grid-template-columns: minmax(260px, 360px) 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  @media (max-width: 900px) {
+    .hero-grid { grid-template-columns: 1fr; }
+  }
+
+  .card {
+    background: var(--surface-container-low);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    box-shadow: var(--elev-1);
+    transition: box-shadow 0.2s, background-color 0.25s;
+  }
+  .card:hover { box-shadow: var(--elev-2); }
+
+  /* Goal ring card */
+  .goal-card {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    position: relative;
+  }
+  .goal-card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .goal-card-head h3 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--on-surface);
+    letter-spacing: 0.15px;
+  }
+  .goal-ring-wrap {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+  }
+  .ring-svg {
+    width: 140px;
+    height: 140px;
+    transform: rotate(-90deg);
+    flex-shrink: 0;
+  }
+  .ring-bg { fill: none; stroke: var(--surface-container-highest); stroke-width: 14; }
+  .ring-fg {
+    fill: none;
+    stroke: var(--primary);
+    stroke-width: 14;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 0.6s cubic-bezier(.2,.8,.2,1);
+  }
+  .ring-fg.done { stroke: var(--success); }
+  .ring-label {
+    position: relative;
+    margin-left: -140px;
+    width: 140px;
+    height: 140px;
+    display: grid;
+    place-items: center;
+    pointer-events: none;
+  }
+  .ring-label-inner {
+    text-align: center;
+    line-height: 1.1;
+  }
+  .ring-label-inner .pct {
+    font-size: 26px;
+    font-weight: 500;
+    color: var(--on-surface);
+  }
+  .ring-label-inner .small {
+    font-size: 11px;
+    color: var(--on-surface-variant);
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+  }
+  .goal-facts {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+  }
+  .goal-facts .big {
+    font-size: 20px;
+    font-weight: 500;
+    color: var(--on-surface);
+  }
+  .goal-facts .label {
+    font-size: 12px;
+    color: var(--on-surface-variant);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+  .goal-facts .sub {
+    font-size: 12px;
+    color: var(--on-surface-variant);
+    margin-top: 2px;
+  }
+
+  /* Streak card */
+  .streak-card {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .streak-tile {
+    padding: 16px;
+    border-radius: var(--radius-md);
+    background: var(--surface-container);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .streak-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    background: color-mix(in srgb, var(--flame) 18%, transparent);
+    color: var(--flame);
+  }
+  .streak-icon.best {
+    background: color-mix(in srgb, var(--gold) 18%, transparent);
+    color: var(--gold);
+  }
+  .streak-icon .material-symbols-rounded { font-size: 28px; }
+  .streak-val {
+    font-size: 26px;
+    font-weight: 500;
+    line-height: 1;
+    color: var(--on-surface);
+  }
+  .streak-unit {
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--on-surface-variant);
+    margin-left: 4px;
+  }
+  .streak-label {
+    font-size: 12px;
+    color: var(--on-surface-variant);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    margin-top: 2px;
+  }
+  @media (max-width: 520px) {
+    .streak-card { grid-template-columns: 1fr; }
+  }
+
+  /* ---------- Summary cards ---------- */
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .stat-card .stat-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--on-surface-variant);
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.2px;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+  }
+  .stat-card .stat-head .material-symbols-rounded {
+    color: var(--primary);
+    font-size: 20px;
+  }
+  .stat-card .stat-value {
+    font-size: 28px;
+    font-weight: 500;
+    letter-spacing: -0.25px;
+    color: var(--on-surface);
+  }
+  .stat-card .stat-meta {
+    font-size: 12px;
+    color: var(--on-surface-variant);
+    margin-top: 4px;
+  }
+
+  /* ---------- Section ---------- */
+  .section { margin-bottom: 32px; }
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .section-title {
+    font-size: 18px;
+    font-weight: 500;
+    letter-spacing: 0.15px;
+    color: var(--on-surface);
+  }
+
+  /* ---------- Charts grid ---------- */
+  .chart-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+    gap: 16px;
+  }
+  .chart-card {
+    padding: 16px 20px 20px;
+    min-height: 320px;
+    display: flex;
+    flex-direction: column;
+  }
+  .chart-card h3 {
+    margin: 0 0 12px;
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--on-surface);
+    letter-spacing: 0.15px;
+  }
+  .chart-wrap {
+    position: relative;
+    flex: 1;
+    min-height: 240px;
+  }
+
+  /* ---------- Activity list ---------- */
+  .list-card { padding: 0; overflow: hidden; }
+  .list-row {
+    display: grid;
+    grid-template-columns: auto 1.3fr auto auto auto auto auto auto auto;
+    gap: 14px;
+    align-items: center;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--outline-variant);
+    transition: background-color 0.1s;
+  }
+  .list-row:last-child { border-bottom: none; }
+  .list-row:hover { background: var(--surface-container); }
+  .list-row .activity-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--primary-container);
+    color: var(--on-primary-container);
+    display: grid;
+    place-items: center;
+  }
+  .list-row .activity-name-wrap {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .list-row .activity-name {
+    font-weight: 500;
+    color: var(--on-surface);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .list-row .activity-date {
+    font-size: 12px;
+    color: var(--on-surface-variant);
+  }
+  .list-row .metric {
+    font-size: 13px;
+    color: var(--on-surface-variant);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+  }
+  .list-row .metric strong {
+    color: var(--on-surface);
+    font-weight: 500;
+  }
+  .rating-stars { color: #f0a030; letter-spacing: -1px; }
+  .delete-btn { opacity: 0; transition: opacity 0.15s; }
+  .list-row:hover .delete-btn { opacity: 1; }
+
+  .pr-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    background: color-mix(in srgb, var(--gold) 18%, transparent);
+    color: var(--gold);
+    cursor: help;
+  }
+  .pr-badge .material-symbols-rounded {
+    font-size: 14px;
+    font-variation-settings: 'FILL' 1;
+  }
+
+  .empty-state {
+    padding: 48px 24px;
+    text-align: center;
+    color: var(--on-surface-variant);
+  }
+  .empty-state .material-symbols-rounded {
+    font-size: 48px;
+    color: var(--outline);
+    margin-bottom: 8px;
+  }
+
+  /* ---------- FAB ---------- */
+  .fab {
+    position: fixed;
+    right: 28px;
+    bottom: 28px;
+    background: var(--primary-container);
+    color: var(--on-primary-container);
+    border-radius: var(--radius-lg);
+    height: 56px;
+    padding: 0 20px;
+    border: none;
+    font: inherit;
+    font-weight: 500;
+    font-size: 14px;
+    letter-spacing: 0.1px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    box-shadow: var(--elev-3);
+    z-index: 5;
+    transition: box-shadow 0.2s, transform 0.1s;
+  }
+  .fab:hover { box-shadow: 0 6px 12px rgba(0,0,0,0.2); }
+  .fab:active { transform: scale(0.96); }
+
+  /* ---------- Dialog ---------- */
+  .scrim {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: 100;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+    display: grid;
+    place-items: center;
+    padding: 16px;
+  }
+  .scrim.open { opacity: 1; pointer-events: auto; }
+
+  .dialog {
+    background: var(--surface-container-high);
+    color: var(--on-surface);
+    border-radius: var(--radius-xl);
+    max-width: 520px;
+    width: calc(100% - 32px);
+    max-height: 90vh;
+    overflow: auto;
+    margin: auto;
+    box-shadow: var(--elev-3);
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.2s;
+  }
+  .scrim.open .dialog { transform: translateY(0) scale(1); }
+
+  .dialog h2 {
+    margin: 0;
+    padding: 24px 24px 8px;
+    font-size: 22px;
+    font-weight: 400;
+    letter-spacing: 0;
+  }
+  .dialog .dialog-body { padding: 16px 24px 8px; }
+  .dialog .dialog-actions {
+    padding: 12px 16px 16px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+
+  /* ---------- Form ---------- */
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field.full { grid-column: 1 / -1; }
+  .field label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--on-surface-variant);
+    letter-spacing: 0.4px;
+  }
+  .field input, .field select {
+    font: inherit;
+    font-size: 14px;
+    padding: 10px 12px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--outline);
+    background: var(--surface-container-lowest);
+    color: var(--on-surface);
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .field input:focus, .field select:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 20%, transparent);
+  }
+
+  .rating-row {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+  .rating-row button {
+    background: transparent;
+    border: 1px solid var(--outline);
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    cursor: pointer;
+    color: var(--on-surface-variant);
+    display: grid;
+    place-items: center;
+    transition: all 0.12s;
+  }
+  .rating-row button.active {
+    background: var(--primary);
+    color: var(--on-primary);
+    border-color: var(--primary);
+  }
+  .rating-row button:hover:not(.active) {
+    background: var(--surface-container-highest);
+  }
+
+  /* ---------- Segmented control ---------- */
+  .segmented {
+    display: inline-flex;
+    background: var(--surface-container);
+    border-radius: 20px;
+    padding: 2px;
+  }
+  .segmented button {
+    background: transparent;
+    border: none;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--on-surface-variant);
+    padding: 6px 14px;
+    border-radius: 18px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .segmented button.active {
+    background: var(--primary-container);
+    color: var(--on-primary-container);
+  }
+
+  /* ---------- Toast ---------- */
+  .toast {
+    position: fixed;
+    left: 50%;
+    bottom: 96px;
+    transform: translateX(-50%) translateY(12px);
+    background: var(--on-surface);
+    color: var(--surface);
+    padding: 12px 18px;
+    border-radius: var(--radius-sm);
+    box-shadow: var(--elev-3);
+    z-index: 200;
+    font-size: 13px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s, transform 0.25s;
+    max-width: 460px;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ---------- Responsive tuning for list ---------- */
+  @media (max-width: 1100px) {
+    .list-row { grid-template-columns: auto 1fr auto auto auto auto auto; }
+    .list-row .metric.col-pace { display: none; }
+  }
+  @media (max-width: 768px) {
+    main { padding: 16px; }
+    .list-row { grid-template-columns: auto 1fr auto auto; row-gap: 4px; }
+    .list-row .metric:nth-child(n+5) { display: none; }
+    .list-row .pr-badge { display: none; }
+    .form-grid { grid-template-columns: 1fr; }
+    .fab span.label { display: none; }
+    .fab { padding: 0; width: 56px; justify-content: center; }
+  }
+
+  /* ---------- Scrollbar ---------- */
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--outline-variant); border-radius: 5px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--outline); }
+</style>
+</head>
+<body>
+
+<header class="app-bar">
+  <div class="brand">
+    <div class="brand-logo"><span class="material-symbols-rounded">fitness_center</span></div>
+    <span>FitLedger</span>
+  </div>
+  <div class="bar-actions">
+    <div class="segmented" id="rangeSeg">
+      <button data-range="7">7D</button>
+      <button data-range="30" class="active">30D</button>
+      <button data-range="90">90D</button>
+      <button data-range="365">1Y</button>
+      <button data-range="all">All</button>
+    </div>
+    <button class="btn-icon" id="themeBtn" title="Toggle theme" aria-label="Toggle theme">
+      <span class="material-symbols-rounded" id="themeIcon">dark_mode</span>
+    </button>
+    <button class="btn-icon" id="importBtn" title="Import CSV" aria-label="Import CSV">
+      <span class="material-symbols-rounded">upload</span>
+    </button>
+    <button class="btn-icon" id="exportBtn" title="Export JSON" aria-label="Export JSON">
+      <span class="material-symbols-rounded">download</span>
+    </button>
+    <input type="file" id="csvFile" accept=".csv,text/csv" hidden />
+  </div>
+</header>
+
+<main>
+  <h1 class="page-title">Every session, on the books.</h1>
+  <p class="page-subtitle" id="subtitle">Log the work. Watch it compound.</p>
+
+  <!-- Weekly goal + streaks -->
+  <section class="hero-grid">
+    <div class="card goal-card">
+      <div class="goal-card-head">
+        <h3>This week's goal</h3>
+        <button class="btn-icon" id="editGoalBtn" title="Edit weekly goal" aria-label="Edit weekly goal">
+          <span class="material-symbols-rounded">edit</span>
+        </button>
+      </div>
+      <div class="goal-ring-wrap">
+        <svg class="ring-svg" viewBox="0 0 120 120" aria-hidden="true">
+          <circle class="ring-bg" cx="60" cy="60" r="52" />
+          <circle class="ring-fg" id="ringFg" cx="60" cy="60" r="52"
+                  stroke-dasharray="326.7" stroke-dashoffset="326.7" />
+        </svg>
+        <div class="ring-label">
+          <div class="ring-label-inner">
+            <div class="pct" id="ringPct">0%</div>
+            <div class="small">of goal</div>
+          </div>
+        </div>
+        <div class="goal-facts">
+          <div>
+            <div class="label">This week</div>
+            <div class="big" id="weekMinutes">0 min</div>
+          </div>
+          <div>
+            <div class="label">Goal</div>
+            <div class="big" id="weekGoal">150 min</div>
+            <div class="sub" id="weekRemaining">150 min to go</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card streak-card">
+      <div class="streak-tile">
+        <div class="streak-icon"><span class="material-symbols-rounded">local_fire_department</span></div>
+        <div>
+          <div><span class="streak-val" id="curStreak">0</span><span class="streak-unit" id="curStreakUnit">days</span></div>
+          <div class="streak-label">Current streak</div>
+        </div>
+      </div>
+      <div class="streak-tile">
+        <div class="streak-icon best"><span class="material-symbols-rounded">emoji_events</span></div>
+        <div>
+          <div><span class="streak-val" id="bestStreak">0</span><span class="streak-unit" id="bestStreakUnit">days</span></div>
+          <div class="streak-label">Best streak</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Summary cards -->
+  <section class="summary-grid" id="summary"></section>
+
+  <!-- Charts -->
+  <section class="section">
+    <div class="section-header">
+      <div class="section-title">Trends</div>
+    </div>
+    <div class="chart-grid">
+      <div class="card chart-card">
+        <h3>Activity over time</h3>
+        <div class="chart-wrap"><canvas id="chartActivity"></canvas></div>
+      </div>
+      <div class="card chart-card">
+        <h3>Calories burned</h3>
+        <div class="chart-wrap"><canvas id="chartCalories"></canvas></div>
+      </div>
+      <div class="card chart-card">
+        <h3>Average heart rate</h3>
+        <div class="chart-wrap"><canvas id="chartHeart"></canvas></div>
+      </div>
+      <div class="card chart-card">
+        <h3>Activity breakdown</h3>
+        <div class="chart-wrap"><canvas id="chartBreakdown"></canvas></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- History -->
+  <section class="section">
+    <div class="section-header">
+      <div class="section-title">Recent activity</div>
+      <button class="btn btn-text" id="clearAllBtn">
+        <span class="material-symbols-rounded">delete_sweep</span>
+        Clear all
+      </button>
+    </div>
+    <div class="card list-card" id="activityList"></div>
+  </section>
+</main>
+
+<button class="fab" id="addFab">
+  <span class="material-symbols-rounded">add</span>
+  <span class="label">Log workout</span>
+</button>
+
+<!-- Add/Edit activity dialog -->
+<div class="scrim" id="scrim">
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="dialogTitle">
+    <h2 id="dialogTitle">Log a workout</h2>
+    <div class="dialog-body">
+      <form id="activityForm" class="form-grid" onsubmit="return false;">
+        <div class="field full">
+          <label for="f-type">Activity</label>
+          <select id="f-type">
+            <option value="Running">🏃 Running</option>
+            <option value="Cycling">🚴 Cycling</option>
+            <option value="Walking">🚶 Walking</option>
+            <option value="Swimming">🏊 Swimming</option>
+            <option value="Strength">🏋️ Strength training</option>
+            <option value="Yoga">🧘 Yoga</option>
+            <option value="HIIT">🔥 HIIT</option>
+            <option value="Hiking">🥾 Hiking</option>
+            <option value="Rowing">🚣 Rowing</option>
+            <option value="Other">🎯 Other</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="f-date">Date</label>
+          <input type="date" id="f-date" required />
+        </div>
+        <div class="field">
+          <label for="f-duration">Duration (minutes)</label>
+          <input type="number" id="f-duration" min="1" step="1" placeholder="45" required />
+        </div>
+        <div class="field">
+          <label for="f-distance">Distance (km)</label>
+          <input type="number" id="f-distance" min="0" step="0.01" placeholder="5.20" />
+        </div>
+        <div class="field">
+          <label for="f-calories">Calories burned</label>
+          <input type="number" id="f-calories" min="0" step="1" placeholder="380" />
+        </div>
+        <div class="field full">
+          <label for="f-hr">Avg heart rate (bpm)</label>
+          <input type="number" id="f-hr" min="30" max="240" step="1" placeholder="142" />
+        </div>
+        <div class="field full">
+          <label>Workout rating</label>
+          <div class="rating-row" id="ratingRow" data-key="rating">
+            <button type="button" data-val="1">1</button>
+            <button type="button" data-val="2">2</button>
+            <button type="button" data-val="3">3</button>
+            <button type="button" data-val="4">4</button>
+            <button type="button" data-val="5">5</button>
+          </div>
+        </div>
+        <div class="field full">
+          <label>Mood / energy level</label>
+          <div class="rating-row" id="moodRow" data-key="mood">
+            <button type="button" data-val="1" title="Drained">😫</button>
+            <button type="button" data-val="2" title="Tired">😕</button>
+            <button type="button" data-val="3" title="OK">😐</button>
+            <button type="button" data-val="4" title="Good">🙂</button>
+            <button type="button" data-val="5" title="Great">😄</button>
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="dialog-actions">
+      <button class="btn btn-text" id="cancelBtn">Cancel</button>
+      <button class="btn btn-filled" id="saveBtn">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Goal edit dialog -->
+<div class="scrim" id="goalScrim">
+  <div class="dialog" role="dialog" aria-modal="true">
+    <h2>Weekly activity goal</h2>
+    <div class="dialog-body">
+      <div class="field full">
+        <label for="goalInput">Target minutes per week (Mon–Sun)</label>
+        <input type="number" id="goalInput" min="15" max="3000" step="5" />
+      </div>
+      <div style="font-size:12px; color:var(--on-surface-variant); margin-top:8px;">
+        The WHO recommends 150 minutes of moderate activity per week.
+      </div>
+    </div>
+    <div class="dialog-actions">
+      <button class="btn btn-text" id="goalCancelBtn">Cancel</button>
+      <button class="btn btn-filled" id="goalSaveBtn">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ========== State & Storage ========== */
+const STORAGE_KEY = 'pulse.activities.v2';
+const LEGACY_KEY = 'pulse.activities.v1';
+const THEME_KEY = 'pulse.theme';
+const RANGE_KEY = 'pulse.range';
+const GOAL_KEY = 'pulse.weeklyGoal';
+const DEFAULT_GOAL = 150;
+
+const ACTIVITY_ICONS = {
+  Running: 'directions_run',
+  Cycling: 'directions_bike',
+  Walking: 'directions_walk',
+  Swimming: 'pool',
+  Strength: 'fitness_center',
+  Yoga: 'self_improvement',
+  HIIT: 'bolt',
+  Hiking: 'hiking',
+  Rowing: 'rowing',
+  Other: 'sports'
+};
+
+// Which types use min/km pace vs km/h speed vs neither.
+const PACE_TYPES = new Set(['Running', 'Walking', 'Hiking']);     // min/km (lower is better)
+const SPEED_TYPES = new Set(['Cycling', 'Swimming', 'Rowing']);  // km/h (higher is better)
+const DISTANCE_TYPES = new Set([...PACE_TYPES, ...SPEED_TYPES]);
+
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+
+function loadActivities() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) return JSON.parse(raw);
+    // Migrate from v1 if present
+    const legacy = localStorage.getItem(LEGACY_KEY);
+    if (legacy) {
+      const list = JSON.parse(legacy).map(a => ({ ...a, distance: +a.distance || 0 }));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+      return list;
+    }
+    return seedData();
+  } catch (e) { return seedData(); }
+}
+
+function saveActivities(list) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+}
+
+function seedData() {
+  const seed = [];
+  const types = ['Running','Cycling','Strength','Yoga','HIIT','Walking','Swimming'];
+  const now = new Date();
+  for (let i = 44; i >= 0; i--) {
+    if (Math.random() < 0.35) continue;
+    const t = types[Math.floor(Math.random() * types.length)];
+    const d = new Date(now);
+    d.setDate(now.getDate() - i);
+    const duration = 20 + Math.floor(Math.random() * 60);
+    const intensity = 0.6 + Math.random() * 0.5;
+    const calories = Math.round(duration * (t === 'Yoga' ? 4 : t === 'Walking' ? 5 : t === 'Running' ? 11 : 8) * intensity);
+    const hr = Math.round((t === 'Yoga' ? 90 : t === 'Walking' ? 105 : 130) + Math.random() * 30);
+    let distance = 0;
+    if (t === 'Running') distance = +(duration / (5 + Math.random() * 3)).toFixed(2);         // ~5–8 min/km
+    else if (t === 'Walking') distance = +(duration / (10 + Math.random() * 4)).toFixed(2);   // ~10–14 min/km
+    else if (t === 'Cycling') distance = +(duration * (0.3 + Math.random() * 0.15)).toFixed(2); // ~18–27 km/h
+    else if (t === 'Swimming') distance = +(duration * (0.035 + Math.random() * 0.02)).toFixed(2);
+    seed.push({
+      id: uid(),
+      type: t,
+      date: d.toISOString().slice(0, 10),
+      duration,
+      calories,
+      hr,
+      distance,
+      rating: Math.ceil(Math.random() * 3) + 2,
+      mood: Math.ceil(Math.random() * 3) + 2
+    });
+  }
+  saveActivities(seed);
+  return seed;
+}
+
+let activities = loadActivities();
+let weeklyGoal = parseInt(localStorage.getItem(GOAL_KEY), 10) || DEFAULT_GOAL;
+let editingId = null;
+
+/* ========== Theme ========== */
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  document.getElementById('themeIcon').textContent = theme === 'dark' ? 'light_mode' : 'dark_mode';
+  localStorage.setItem(THEME_KEY, theme);
+  if (window._charts) renderAllCharts();
+}
+function initTheme() {
+  const saved = localStorage.getItem(THEME_KEY);
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  applyTheme(saved || (prefersDark ? 'dark' : 'light'));
+}
+document.getElementById('themeBtn').addEventListener('click', () => {
+  const cur = document.documentElement.getAttribute('data-theme');
+  applyTheme(cur === 'dark' ? 'light' : 'dark');
+});
+
+/* ========== Range filter ========== */
+let activeRange = localStorage.getItem(RANGE_KEY) || '30';
+function filterByRange(list) {
+  if (activeRange === 'all') return list;
+  const days = parseInt(activeRange, 10);
+  const cutoff = new Date();
+  cutoff.setHours(0,0,0,0);
+  cutoff.setDate(cutoff.getDate() - (days - 1));
+  return list.filter(a => new Date(a.date + 'T00:00:00') >= cutoff);
+}
+document.getElementById('rangeSeg').addEventListener('click', (e) => {
+  const b = e.target.closest('button[data-range]');
+  if (!b) return;
+  document.querySelectorAll('#rangeSeg button').forEach(x => x.classList.remove('active'));
+  b.classList.add('active');
+  activeRange = b.dataset.range;
+  localStorage.setItem(RANGE_KEY, activeRange);
+  render();
+});
+(function syncRangeButton() {
+  document.querySelectorAll('#rangeSeg button').forEach(b => {
+    if (b.dataset.range === activeRange) {
+      document.querySelectorAll('#rangeSeg button').forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
+    }
+  });
+})();
+
+/* ========== Helpers ========== */
+function formatDate(iso) {
+  const d = new Date(iso + 'T00:00:00');
+  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+}
+function formatMinutes(m) {
+  if (!m) return '0m';
+  const h = Math.floor(m / 60);
+  const mm = m % 60;
+  return h ? `${h}h ${mm}m` : `${mm}m`;
+}
+function todayISO() { return new Date().toISOString().slice(0, 10); }
+// Monday-start-of-week
+function startOfWeek(d = new Date()) {
+  const x = new Date(d);
+  x.setHours(0, 0, 0, 0);
+  const day = (x.getDay() + 6) % 7; // 0 = Mon
+  x.setDate(x.getDate() - day);
+  return x;
+}
+function toISO(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+/* ========== Pace / speed ========== */
+function paceFor(a) {
+  // Returns {label, value, unit, better: 'low'|'high'} or null.
+  const dist = +a.distance;
+  const dur = +a.duration;
+  if (!dist || !dur) return null;
+  if (PACE_TYPES.has(a.type)) {
+    const minPerKm = dur / dist;
+    const mm = Math.floor(minPerKm);
+    const ss = Math.round((minPerKm - mm) * 60);
+    return {
+      label: `${mm}:${String(ss).padStart(2, '0')}`,
+      value: minPerKm,
+      unit: '/km',
+      better: 'low'
+    };
+  }
+  if (SPEED_TYPES.has(a.type)) {
+    const kmh = dist / (dur / 60);
+    return {
+      label: kmh.toFixed(1),
+      value: kmh,
+      unit: 'km/h',
+      better: 'high'
+    };
+  }
+  return null;
+}
+
+/* ========== PR detection ========== */
+function computePRs(list) {
+  // Returns Map<activityId, string[]> — categories that this activity currently holds (by type).
+  const byType = {};
+  list.forEach(a => {
+    (byType[a.type] = byType[a.type] || []).push(a);
+  });
+  const prs = new Map();
+
+  function markPR(id, label) {
+    if (!prs.has(id)) prs.set(id, []);
+    prs.get(id).push(label);
+  }
+
+  Object.entries(byType).forEach(([type, items]) => {
+    if (items.length < 2) return; // only meaningful with multiple entries
+    // Longest duration
+    const dur = items.reduce((best, a) => (+a.duration > +best.duration ? a : best), items[0]);
+    if (+dur.duration > 0) markPR(dur.id, 'Longest duration');
+    // Most calories
+    const calItems = items.filter(a => +a.calories > 0);
+    if (calItems.length) {
+      const cal = calItems.reduce((best, a) => (+a.calories > +best.calories ? a : best), calItems[0]);
+      markPR(cal.id, 'Most calories');
+    }
+    // Distance + pace/speed PRs for relevant types
+    if (DISTANCE_TYPES.has(type)) {
+      const distItems = items.filter(a => +a.distance > 0);
+      if (distItems.length) {
+        const dist = distItems.reduce((best, a) => (+a.distance > +best.distance ? a : best), distItems[0]);
+        markPR(dist.id, 'Longest distance');
+      }
+      const paced = items.map(a => ({ a, p: paceFor(a) })).filter(x => x.p);
+      if (paced.length) {
+        const best = paced.reduce((bst, cur) => {
+          if (!bst) return cur;
+          if (cur.p.better === 'low') return cur.p.value < bst.p.value ? cur : bst;
+          return cur.p.value > bst.p.value ? cur : bst;
+        }, null);
+        if (best) markPR(best.a.id, best.p.better === 'low' ? 'Fastest pace' : 'Top speed');
+      }
+    }
+  });
+
+  return prs;
+}
+
+/* ========== Streaks ========== */
+function computeStreaks(list) {
+  if (!list.length) return { current: 0, best: 0 };
+  const days = new Set(list.map(a => a.date));
+  // Sorted unique date list
+  const sorted = [...days].sort();
+  // Best streak: walk through sorted
+  let best = 1, run = 1;
+  for (let i = 1; i < sorted.length; i++) {
+    const prev = new Date(sorted[i - 1] + 'T00:00:00');
+    const cur = new Date(sorted[i] + 'T00:00:00');
+    const diff = Math.round((cur - prev) / 86400000);
+    if (diff === 1) run++;
+    else run = 1;
+    if (run > best) best = run;
+  }
+  // Current streak: walk backwards from today (or yesterday if today blank)
+  let cursor = new Date();
+  cursor.setHours(0, 0, 0, 0);
+  if (!days.has(toISO(cursor))) cursor.setDate(cursor.getDate() - 1);
+  let current = 0;
+  while (days.has(toISO(cursor))) {
+    current++;
+    cursor.setDate(cursor.getDate() - 1);
+  }
+  return { current, best };
+}
+
+/* ========== Weekly goal ========== */
+function weeklyMinutes() {
+  const start = startOfWeek();
+  const end = new Date(start);
+  end.setDate(end.getDate() + 7);
+  return activities
+    .filter(a => {
+      const d = new Date(a.date + 'T00:00:00');
+      return d >= start && d < end;
+    })
+    .reduce((s, a) => s + (+a.duration || 0), 0);
+}
+
+function renderGoal() {
+  const mins = weeklyMinutes();
+  const pct = Math.min(100, Math.round((mins / weeklyGoal) * 100));
+  const ring = document.getElementById('ringFg');
+  const r = 52;
+  const C = 2 * Math.PI * r;
+  ring.setAttribute('stroke-dasharray', C.toFixed(2));
+  const offset = C * (1 - Math.min(1, mins / weeklyGoal));
+  ring.setAttribute('stroke-dashoffset', offset.toFixed(2));
+  ring.classList.toggle('done', mins >= weeklyGoal);
+  document.getElementById('ringPct').textContent = pct + '%';
+  document.getElementById('weekMinutes').textContent = formatMinutes(mins);
+  document.getElementById('weekGoal').textContent = `${weeklyGoal} min`;
+  const remaining = Math.max(0, weeklyGoal - mins);
+  document.getElementById('weekRemaining').textContent = remaining
+    ? `${formatMinutes(remaining)} to go`
+    : '🎉 Goal reached!';
+}
+
+function renderStreaks() {
+  const { current, best } = computeStreaks(activities);
+  document.getElementById('curStreak').textContent = current;
+  document.getElementById('bestStreak').textContent = best;
+  document.getElementById('curStreakUnit').textContent = current === 1 ? 'day' : 'days';
+  document.getElementById('bestStreakUnit').textContent = best === 1 ? 'day' : 'days';
+}
+
+/* ========== Summary ========== */
+function renderSummary(filtered) {
+  const el = document.getElementById('summary');
+  const count = filtered.length;
+  const totalMin = filtered.reduce((s, a) => s + (+a.duration || 0), 0);
+  const totalCal = filtered.reduce((s, a) => s + (+a.calories || 0), 0);
+  const totalDist = filtered.reduce((s, a) => s + (+a.distance || 0), 0);
+  const hrs = filtered.filter(a => a.hr);
+  const avgHr = hrs.length ? Math.round(hrs.reduce((s, a) => s + +a.hr, 0) / hrs.length) : 0;
+  const ratings = filtered.filter(a => a.rating);
+  const avgRating = ratings.length ? (ratings.reduce((s, a) => s + +a.rating, 0) / ratings.length).toFixed(1) : '—';
+
+  el.innerHTML = `
+    <div class="card stat-card">
+      <div class="stat-head"><span class="material-symbols-rounded">event_available</span> Workouts</div>
+      <div class="stat-value">${count}</div>
+      <div class="stat-meta">in selected range</div>
+    </div>
+    <div class="card stat-card">
+      <div class="stat-head"><span class="material-symbols-rounded">schedule</span> Total time</div>
+      <div class="stat-value">${formatMinutes(totalMin)}</div>
+      <div class="stat-meta">${count ? Math.round(totalMin / count) + ' min avg' : '—'}</div>
+    </div>
+    <div class="card stat-card">
+      <div class="stat-head"><span class="material-symbols-rounded">local_fire_department</span> Calories</div>
+      <div class="stat-value">${totalCal.toLocaleString()}</div>
+      <div class="stat-meta">${count ? Math.round(totalCal / count).toLocaleString() + ' / workout' : '—'}</div>
+    </div>
+    <div class="card stat-card">
+      <div class="stat-head"><span class="material-symbols-rounded">straighten</span> Distance</div>
+      <div class="stat-value">${totalDist.toFixed(1)}<span style="font-size:14px;color:var(--on-surface-variant);font-weight:400"> km</span></div>
+      <div class="stat-meta">${totalDist ? '≈ ' + (totalDist * 0.621371).toFixed(1) + ' mi' : '—'}</div>
+    </div>
+    <div class="card stat-card">
+      <div class="stat-head"><span class="material-symbols-rounded">favorite</span> Avg heart rate</div>
+      <div class="stat-value">${avgHr || '—'}<span style="font-size:14px;color:var(--on-surface-variant);font-weight:400"> bpm</span></div>
+      <div class="stat-meta">${hrs.length} entries</div>
+    </div>
+    <div class="card stat-card">
+      <div class="stat-head"><span class="material-symbols-rounded">star</span> Avg rating</div>
+      <div class="stat-value">${avgRating}<span style="font-size:14px;color:var(--on-surface-variant);font-weight:400"> / 5</span></div>
+      <div class="stat-meta">${ratings.length} rated</div>
+    </div>
+  `;
+}
+
+/* ========== Activity list ========== */
+function renderList(filtered) {
+  const el = document.getElementById('activityList');
+  if (!filtered.length) {
+    el.innerHTML = `
+      <div class="empty-state">
+        <div><span class="material-symbols-rounded">directions_run</span></div>
+        <div><strong>No workouts in this range</strong></div>
+        <div>Log your first workout with the button in the corner.</div>
+      </div>`;
+    return;
+  }
+  const prs = computePRs(activities);
+  const sorted = [...filtered].sort((a, b) => (a.date < b.date ? 1 : -1));
+  el.innerHTML = sorted.map(a => {
+    const p = paceFor(a);
+    const paceCell = p
+      ? `<div class="metric col-pace"><span class="material-symbols-rounded" style="font-size:16px">speed</span><strong>${p.label}</strong>${p.unit}</div>`
+      : `<div class="metric col-pace">—</div>`;
+    const distCell = +a.distance
+      ? `<div class="metric"><span class="material-symbols-rounded" style="font-size:16px">straighten</span><strong>${(+a.distance).toFixed(2)}</strong>km</div>`
+      : `<div class="metric">—</div>`;
+    const prList = prs.get(a.id);
+    const prBadge = prList
+      ? `<span class="pr-badge" title="Personal record: ${prList.join(', ')}">
+           <span class="material-symbols-rounded">emoji_events</span> PR
+         </span>`
+      : '';
+    return `
+      <div class="list-row">
+        <div class="activity-icon" title="${a.type}">
+          <span class="material-symbols-rounded">${ACTIVITY_ICONS[a.type] || 'sports'}</span>
+        </div>
+        <div class="activity-name-wrap">
+          <div class="activity-name">${a.type} ${prBadge}</div>
+          <div class="activity-date">${formatDate(a.date)}</div>
+        </div>
+        <div class="metric"><span class="material-symbols-rounded" style="font-size:16px">schedule</span><strong>${a.duration}</strong>m</div>
+        ${distCell}
+        ${paceCell}
+        <div class="metric"><span class="material-symbols-rounded" style="font-size:16px">local_fire_department</span><strong>${a.calories || '—'}</strong>${a.calories ? 'kcal' : ''}</div>
+        <div class="metric"><span class="material-symbols-rounded" style="font-size:16px">favorite</span><strong>${a.hr || '—'}</strong>${a.hr ? 'bpm' : ''}</div>
+        <div class="metric rating-stars" title="Rating ${a.rating || '—'}/5">${a.rating ? '★'.repeat(a.rating) + '☆'.repeat(5 - a.rating) : '—'}</div>
+        <button class="btn-icon delete-btn" onclick="deleteActivity('${a.id}')" aria-label="Delete" title="Delete">
+          <span class="material-symbols-rounded">close</span>
+        </button>
+      </div>
+    `;
+  }).join('');
+}
+
+/* ========== Charts ========== */
+function cssVar(name) {
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+}
+
+function buildDailyBuckets(filtered) {
+  let days;
+  if (activeRange === 'all') {
+    if (!filtered.length) return { labels: [], buckets: {} };
+    const dates = filtered.map(a => a.date).sort();
+    const start = new Date(dates[0] + 'T00:00:00');
+    const end = new Date();
+    days = Math.ceil((end - start) / 86400000) + 1;
+  } else {
+    days = parseInt(activeRange, 10);
+  }
+  const labels = [];
+  const buckets = {};
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(today.getDate() - i);
+    const iso = toISO(d);
+    labels.push(iso);
+    buckets[iso] = { duration: 0, calories: 0, hrSum: 0, hrCount: 0, count: 0 };
+  }
+  filtered.forEach(a => {
+    const b = buckets[a.date];
+    if (!b) return;
+    b.duration += +a.duration || 0;
+    b.calories += +a.calories || 0;
+    if (a.hr) { b.hrSum += +a.hr; b.hrCount++; }
+    b.count++;
+  });
+  return { labels, buckets };
+}
+
+function niceLabel(iso) {
+  const d = new Date(iso + 'T00:00:00');
+  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}
+
+function destroyCharts() {
+  if (!window._charts) return;
+  Object.values(window._charts).forEach(c => c && c.destroy());
+  window._charts = {};
+}
+
+function renderAllCharts() {
+  destroyCharts();
+  window._charts = {};
+  const filtered = filterByRange(activities);
+  const { labels, buckets } = buildDailyBuckets(filtered);
+  const labelStrings = labels.map(niceLabel);
+
+  const onSurface = cssVar('--on-surface');
+  const onVariant = cssVar('--on-surface-variant');
+  const outlineVar = cssVar('--outline-variant');
+  const primary = cssVar('--primary');
+  const chart1 = cssVar('--chart-1');
+  const chart2 = cssVar('--chart-2');
+  const chart3 = cssVar('--chart-3');
+  const chart4 = cssVar('--chart-4');
+  const chart5 = cssVar('--chart-5');
+  const surfaceContainer = cssVar('--surface-container-lowest');
+
+  Chart.defaults.color = onVariant;
+  Chart.defaults.borderColor = outlineVar;
+  Chart.defaults.font.family = "'Roboto', system-ui, sans-serif";
+
+  const commonScales = {
+    x: { grid: { display: false }, ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 8 } },
+    y: { beginAtZero: true, grid: { color: outlineVar, drawBorder: false }, ticks: { precision: 0 } }
+  };
+
+  const tooltipOpts = {
+    backgroundColor: cssVar('--surface-container-highest'),
+    titleColor: onSurface,
+    bodyColor: onSurface,
+    borderColor: outlineVar,
+    borderWidth: 1,
+    padding: 10,
+    displayColors: false,
+    cornerRadius: 8
+  };
+
+  window._charts.activity = new Chart(document.getElementById('chartActivity'), {
+    type: 'bar',
+    data: {
+      labels: labelStrings,
+      datasets: [{
+        label: 'Minutes',
+        data: labels.map(l => buckets[l].duration),
+        backgroundColor: chart1,
+        borderRadius: 6,
+        maxBarThickness: 22
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { ...tooltipOpts, callbacks: { label: c => c.parsed.y + ' min' } } },
+      scales: commonScales
+    }
+  });
+
+  window._charts.cal = new Chart(document.getElementById('chartCalories'), {
+    type: 'line',
+    data: {
+      labels: labelStrings,
+      datasets: [{
+        label: 'Calories',
+        data: labels.map(l => buckets[l].calories),
+        borderColor: chart2,
+        backgroundColor: chart2 + '33',
+        fill: true,
+        tension: 0.35,
+        pointRadius: 0,
+        pointHoverRadius: 5,
+        borderWidth: 2
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { ...tooltipOpts, callbacks: { label: c => c.parsed.y.toLocaleString() + ' kcal' } } },
+      scales: commonScales
+    }
+  });
+
+  window._charts.hr = new Chart(document.getElementById('chartHeart'), {
+    type: 'line',
+    data: {
+      labels: labelStrings,
+      datasets: [{
+        label: 'Avg HR',
+        data: labels.map(l => {
+          const b = buckets[l];
+          return b.hrCount ? Math.round(b.hrSum / b.hrCount) : null;
+        }),
+        borderColor: chart3,
+        backgroundColor: chart3,
+        spanGaps: true,
+        tension: 0.3,
+        pointRadius: 3,
+        pointHoverRadius: 5,
+        borderWidth: 2
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { ...tooltipOpts, callbacks: { label: c => c.parsed.y + ' bpm' } } },
+      scales: { ...commonScales, y: { ...commonScales.y, beginAtZero: false, suggestedMin: 60 } }
+    }
+  });
+
+  const typeTotals = {};
+  filtered.forEach(a => {
+    typeTotals[a.type] = (typeTotals[a.type] || 0) + (+a.duration || 0);
+  });
+  const breakdownLabels = Object.keys(typeTotals);
+  const breakdownData = breakdownLabels.map(k => typeTotals[k]);
+  const palette = [chart1, chart2, chart3, chart4, chart5, primary, '#ff8a65', '#9ccc65', '#ba68c8', '#4db6ac'];
+
+  window._charts.breakdown = new Chart(document.getElementById('chartBreakdown'), {
+    type: 'doughnut',
+    data: {
+      labels: breakdownLabels,
+      datasets: [{
+        data: breakdownData,
+        backgroundColor: breakdownLabels.map((_, i) => palette[i % palette.length]),
+        borderColor: surfaceContainer,
+        borderWidth: 2,
+        hoverOffset: 8
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      cutout: '62%',
+      plugins: {
+        legend: { position: 'right', labels: { boxWidth: 10, boxHeight: 10, usePointStyle: true, padding: 10 } },
+        tooltip: { ...tooltipOpts, callbacks: { label: c => `${c.label}: ${c.parsed} min` } }
+      }
+    }
+  });
+}
+
+/* ========== Master render ========== */
+function render() {
+  const filtered = filterByRange(activities);
+  const subtitle = document.getElementById('subtitle');
+  const rangeLabel = activeRange === 'all' ? 'all time' : `the last ${activeRange} days`;
+  subtitle.textContent = filtered.length
+    ? `${filtered.length} workout${filtered.length === 1 ? '' : 's'} in ${rangeLabel}.`
+    : `No workouts logged in ${rangeLabel} yet.`;
+  renderGoal();
+  renderStreaks();
+  renderSummary(filtered);
+  renderList(filtered);
+  renderAllCharts();
+}
+
+/* ========== Activity dialog ========== */
+const scrim = document.getElementById('scrim');
+function openDialog(activity) {
+  editingId = activity ? activity.id : null;
+  document.getElementById('dialogTitle').textContent = activity ? 'Edit workout' : 'Log a workout';
+  const a = activity || {
+    type: 'Running',
+    date: todayISO(),
+    duration: '',
+    distance: '',
+    calories: '',
+    hr: '',
+    rating: 0,
+    mood: 0
+  };
+  document.getElementById('f-type').value = a.type;
+  document.getElementById('f-date').value = a.date;
+  document.getElementById('f-duration').value = a.duration;
+  document.getElementById('f-distance').value = a.distance || '';
+  document.getElementById('f-calories').value = a.calories || '';
+  document.getElementById('f-hr').value = a.hr || '';
+  setRatingRow('ratingRow', a.rating || 0);
+  setRatingRow('moodRow', a.mood || 0);
+  scrim.classList.add('open');
+}
+function closeDialog() {
+  scrim.classList.remove('open');
+  editingId = null;
+}
+document.getElementById('addFab').addEventListener('click', () => openDialog());
+document.getElementById('cancelBtn').addEventListener('click', closeDialog);
+scrim.addEventListener('click', (e) => { if (e.target === scrim) closeDialog(); });
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    closeDialog();
+    closeGoalDialog();
+  }
+});
+
+function setRatingRow(rowId, val) {
+  const row = document.getElementById(rowId);
+  row.dataset.val = val || 0;
+  row.querySelectorAll('button').forEach(b => {
+    b.classList.toggle('active', +b.dataset.val === +val);
+  });
+}
+['ratingRow', 'moodRow'].forEach(id => {
+  const row = document.getElementById(id);
+  row.addEventListener('click', (e) => {
+    const b = e.target.closest('button');
+    if (!b) return;
+    setRatingRow(id, +b.dataset.val);
+  });
+});
+
+document.getElementById('saveBtn').addEventListener('click', () => {
+  const type = document.getElementById('f-type').value;
+  const date = document.getElementById('f-date').value;
+  const duration = parseInt(document.getElementById('f-duration').value, 10);
+  const distance = parseFloat(document.getElementById('f-distance').value) || 0;
+  const calories = parseInt(document.getElementById('f-calories').value, 10) || 0;
+  const hr = parseInt(document.getElementById('f-hr').value, 10) || 0;
+  const rating = +document.getElementById('ratingRow').dataset.val || 0;
+  const mood = +document.getElementById('moodRow').dataset.val || 0;
+
+  if (!date || !duration || duration < 1) {
+    toast('Please provide a valid date and duration.');
+    return;
+  }
+
+  if (editingId) {
+    const idx = activities.findIndex(a => a.id === editingId);
+    if (idx >= 0) activities[idx] = { ...activities[idx], type, date, duration, distance, calories, hr, rating, mood };
+  } else {
+    activities.push({ id: uid(), type, date, duration, distance, calories, hr, rating, mood });
+  }
+  saveActivities(activities);
+  closeDialog();
+  render();
+});
+
+window.deleteActivity = function(id) {
+  if (!confirm('Delete this workout?')) return;
+  activities = activities.filter(a => a.id !== id);
+  saveActivities(activities);
+  render();
+};
+
+document.getElementById('clearAllBtn').addEventListener('click', () => {
+  if (!activities.length) return;
+  if (!confirm('Delete ALL logged workouts? This cannot be undone.')) return;
+  activities = [];
+  saveActivities(activities);
+  render();
+});
+
+/* ========== Goal dialog ========== */
+const goalScrim = document.getElementById('goalScrim');
+function openGoalDialog() {
+  document.getElementById('goalInput').value = weeklyGoal;
+  goalScrim.classList.add('open');
+}
+function closeGoalDialog() {
+  goalScrim.classList.remove('open');
+}
+document.getElementById('editGoalBtn').addEventListener('click', openGoalDialog);
+document.getElementById('goalCancelBtn').addEventListener('click', closeGoalDialog);
+document.getElementById('goalSaveBtn').addEventListener('click', () => {
+  const val = parseInt(document.getElementById('goalInput').value, 10);
+  if (!val || val < 15) { toast('Pick a goal of at least 15 minutes.'); return; }
+  weeklyGoal = val;
+  localStorage.setItem(GOAL_KEY, String(weeklyGoal));
+  closeGoalDialog();
+  renderGoal();
+});
+goalScrim.addEventListener('click', (e) => { if (e.target === goalScrim) closeGoalDialog(); });
+
+/* ========== Export ========== */
+document.getElementById('exportBtn').addEventListener('click', () => {
+  const blob = new Blob([JSON.stringify(activities, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `pulse-workouts-${todayISO()}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast('Exported ' + activities.length + ' workout' + (activities.length === 1 ? '' : 's') + ' as JSON.');
+});
+
+/* ========== CSV import ========== */
+document.getElementById('importBtn').addEventListener('click', () => {
+  document.getElementById('csvFile').click();
+});
+
+document.getElementById('csvFile').addEventListener('change', (e) => {
+  const file = e.target.files && e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const result = importCSV(String(reader.result));
+      if (result.added) {
+        activities = activities.concat(result.added);
+        saveActivities(activities);
+        render();
+      }
+      toast(`Imported ${result.added.length} workout${result.added.length === 1 ? '' : 's'}` +
+            (result.skipped ? `, skipped ${result.skipped}.` : '.'));
+    } catch (err) {
+      toast('Import failed: ' + err.message);
+    }
+    e.target.value = ''; // allow same file re-import
+  };
+  reader.onerror = () => toast('Could not read file.');
+  reader.readAsText(file);
+});
+
+// Minimal CSV parser (handles quoted fields, escaped quotes, commas in quotes).
+function parseCSV(text) {
+  const rows = [];
+  let row = [], cur = '', inQ = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (inQ) {
+      if (c === '"') {
+        if (text[i + 1] === '"') { cur += '"'; i++; }
+        else inQ = false;
+      } else cur += c;
+    } else {
+      if (c === '"') inQ = true;
+      else if (c === ',') { row.push(cur); cur = ''; }
+      else if (c === '\r') { /* ignore */ }
+      else if (c === '\n') { row.push(cur); rows.push(row); row = []; cur = ''; }
+      else cur += c;
+    }
+  }
+  if (cur.length || row.length) { row.push(cur); rows.push(row); }
+  return rows.filter(r => r.length && !(r.length === 1 && r[0] === ''));
+}
+
+function importCSV(text) {
+  const rows = parseCSV(text);
+  if (!rows.length) throw new Error('Empty file');
+  const header = rows[0].map(h => h.trim().toLowerCase());
+  const required = ['date', 'type', 'duration'];
+  for (const req of required) {
+    if (!header.includes(req)) throw new Error(`Missing required column: ${req}`);
+  }
+  const colIdx = (name) => header.indexOf(name);
+  const added = [];
+  let skipped = 0;
+  for (let i = 1; i < rows.length; i++) {
+    const r = rows[i];
+    const get = (name) => {
+      const idx = colIdx(name);
+      return idx >= 0 && idx < r.length ? (r[idx] || '').trim() : '';
+    };
+    const date = normalizeDate(get('date'));
+    const type = normalizeType(get('type'));
+    const duration = parseInt(get('duration'), 10);
+    if (!date || !type || !duration || duration < 1) { skipped++; continue; }
+    added.push({
+      id: uid(),
+      date,
+      type,
+      duration,
+      distance: parseFloat(get('distance')) || 0,
+      calories: parseInt(get('calories'), 10) || 0,
+      hr: parseInt(get('hr') || get('heart_rate') || get('heartrate'), 10) || 0,
+      rating: Math.min(5, Math.max(0, parseInt(get('rating'), 10) || 0)),
+      mood: Math.min(5, Math.max(0, parseInt(get('mood'), 10) || 0))
+    });
+  }
+  return { added, skipped };
+}
+
+function normalizeDate(s) {
+  if (!s) return '';
+  // Accept YYYY-MM-DD, MM/DD/YYYY, DD/MM/YYYY (best-effort)
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  const slash = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
+  if (slash) {
+    let [, a, b, y] = slash;
+    if (y.length === 2) y = (parseInt(y, 10) > 50 ? '19' : '20') + y;
+    // Heuristic: first field > 12 → DD/MM; else MM/DD
+    const first = parseInt(a, 10), second = parseInt(b, 10);
+    let mm, dd;
+    if (first > 12) { dd = first; mm = second; }
+    else { mm = first; dd = second; }
+    return `${y}-${String(mm).padStart(2, '0')}-${String(dd).padStart(2, '0')}`;
+  }
+  // Try Date parsing as fallback
+  const d = new Date(s);
+  return isNaN(d) ? '' : toISO(d);
+}
+
+function normalizeType(s) {
+  if (!s) return '';
+  const t = s.trim();
+  const match = Object.keys(ACTIVITY_ICONS).find(k => k.toLowerCase() === t.toLowerCase());
+  return match || (t.charAt(0).toUpperCase() + t.slice(1).toLowerCase());
+}
+
+/* ========== Toast ========== */
+let toastTimer = null;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 3200);
+}
+
+/* ========== Init ========== */
+initTheme();
+render();
+</script>
+</body>
+</html>
